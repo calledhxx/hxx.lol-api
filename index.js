@@ -1,5 +1,4 @@
 const http = require('http');
-const {raw} = require("express");
 
 function getRequestBody(req) {
     return new Promise((resolve, reject) => {
@@ -24,10 +23,7 @@ const server = http.createServer( async (req, res) => {
         }
     }
 
-    let apiName =  /^\/api\//.test(req.url) ?
-        req.url.substring(5,req.url.length) :
-        false
-
+    let apiName = req.url.split('/').pop();
 
     switch (req.method){
         case "GET":{
@@ -83,5 +79,5 @@ const server = http.createServer( async (req, res) => {
 });
 
 server.listen(443, () => {
-    console.log('https://hxx.lol/api');
+    console.log('https://api/hxx.lol/');
 });

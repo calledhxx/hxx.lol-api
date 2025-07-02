@@ -1,87 +1,77 @@
-const http = require('http');
-const {raw} = require("express");
-
-function getRequestBody(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        req.on('end', () => {
-            resolve(body);
-        });
-        req.on('error', err => {
-            reject(err);
-        });
-    });
-}
-
-const server = http.createServer( async (req, res) => {
+export default async function handler(req, res) {
     let ret = {
-        "retCode" : 200,
-        "retContent":{
-            "error":"伺服器不認你欸"
+        retCode: 200,
+        retContent: {
+            error: "伺服器不認你欸"
         }
-    }
+    };
 
-    let apiName =  /^\/api\//.test(req.url) ?
-        req.url.substring(5,req.url.length) :
-        false
+    const url = req.url || '';
+    const apiMatch = /^\/api\/(.*)/.exec(url);
+    const apiName = apiMatch ? apiMatch[1] : false;
 
-
-    switch (req.method){
-        case "GET":{
-            switch(apiName){
-                case "hello":{
+    switch (req.method) {
+        case "GET": {
+            switch (apiName) {
+                case "hello": {
                     ret.retContent = {
-                        "message":"Hello World!"
-                    }
+                        message: "Hello World!"
+                    };
                     ret.retCode = 200;
+                    break;
                 }
             }
             break;
         }
-        case "POST":{
 
-            let body;
+        case "POST": {
+            let body = '';
 
-            try{
-                body = await getRequestBody(req);
+            try {
+                body = await new Promise((resolve, reject) => {
+                    let data = '';
+                    req.on('data', chunk => (data += chunk.toString()));
+                    req.on('end', () => resolve(data));
+                    req.on('error', err => reject(err));
+                });
                 body = JSON.parse(body);
-            }catch {
+            } catch {
                 ret.retCode = 400;
                 ret.retContent = {
-                    "error":"我不知道的錯誤"
+                    error: "我不知道的錯誤"
                 };
+                break;
             }
 
-
-            switch(apiName){
-                case "write-a-dynamic-bubble-message" :{
-                    if(body.message){
-
+            switch (apiName) {
+                case "write-a-dynamic-bubble-message": {
+                    if (body.message) {
+                        ret.retContent = {
+                            reply: `你剛剛說了：「${body.message}」`
+                        };
+                        ret.retCode = 200;
+                    } else {
+                        ret.retCode = 400;
+                        ret.retContent = {
+                            error: "請包含 message 欄位"
+                        };
                     }
+                    break;
                 }
             }
 
             break;
         }
 
-        default:{
+        default: {
             ret.retContent = {
-                "message":"伺服器好像不支援你的HTTP方法。"
+                message: "伺服器好像不支援你的HTTP方法。"
             };
             ret.retCode = 400;
         }
     }
 
-    let ContentJSON =
-        JSON.stringify(ret.retContent);
-
-    res.writeHead(ret.retCode, { 'Content-Type': 'application/json'});
-    res.end(ContentJSON);
-});
-
-server.listen(443, () => {
-    console.log('https://hxx.lol/api');
-});
+    res.statusCode = ret.retCode;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(ret.retContent));
+}

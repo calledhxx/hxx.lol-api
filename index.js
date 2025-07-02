@@ -17,7 +17,7 @@ function getRequestBody(req) {
 
 const server = http.createServer( async (req, res) => {
     let ret = {
-        "retCode" : 200,
+        "retCode" : 400,
         "retContent":{
             "error":"伺服器不認你欸"
         }
@@ -54,8 +54,15 @@ const server = http.createServer( async (req, res) => {
 
             switch(apiName){
                 case "write-a-dynamic-bubble-message" :{
-                    if(body.message){
+                    if(
+                        body.message &&  body.message.length
+                    ){
 
+                    }else{
+                        ret.retCode = 400;
+                        ret.retContent = {
+                            "error":"無意義的內容"
+                        };
                     }
                 }
             }

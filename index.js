@@ -66,6 +66,7 @@ const server = http.createServer( async (req, res) => {
 
             break;
         }
+
         default:{
             ret.retContent = {
                 "message":"伺服器好像不支援你的HTTP方法。"
